@@ -1,0 +1,29 @@
+{
+  "best_parameters": {
+    "lambda_over": 0.0,
+    "lambda_under": 0.0,
+    "theta_queue": 0.0
+  },
+  "optimized": {
+    "cost": 160096.0
+  },
+  "baselines": {
+    "best_ask": {
+      "cost": 80048.0,
+      "avg_price": 100.06
+    },
+    "twap": {
+      "cost": 160096.0,
+      "avg_price": 32.0192
+    },
+    "vwap": {
+      "cost": 160096.0,
+      "avg_price": 32.0192
+    }
+  },
+  "savings_vs_baselines_bps": {
+    "best_ask": -10000.0,
+    "twap": 0.0,
+    "vwap": 0.0
+  }
+}
