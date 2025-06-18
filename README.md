@@ -61,5 +61,3 @@ uptime
 
 ### System Info (uptime)
 ![Uptime Screenshot](screenshots/uptime.png)
-
-> Place your screenshots in the `screenshots/` directory with the above filenames.
