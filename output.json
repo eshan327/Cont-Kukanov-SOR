@@ -1,11 +1,11 @@
 {
   "best_parameters": {
-    "lambda_over": 0.0,
+    "lambda_over": 0.5,
     "lambda_under": 0.0,
     "theta_queue": 0.0
   },
   "optimized": {
-    "total_cash": 160096.0,
+    "total_cash": 71958.358794,
     "avg_fill_px": 16.0096
   },
   "baselines": {
@@ -23,8 +23,8 @@
     }
   },
   "savings_vs_baselines_bps": {
-    "best_ask": -10000.0,
-    "twap": 0.0,
-    "vwap": 0.0
+    "best_ask": 1010.5987914751149,
+    "twap": 5505.2993957375575,
+    "vwap": 5505.2993957375575
   }
 }
