@@ -1,3 +1,7 @@
-.venv/
+l1_day.csv
+output.json
+results.png
+.DS_Store
 __pycache__/
+.venv/
 .pytest_cache/

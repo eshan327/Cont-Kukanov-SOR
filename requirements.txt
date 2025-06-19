@@ -1,6 +1,7 @@
-numpy
-pandas
-kafka-python
-matplotlib
-tqdm
-pytest
+# Project dependencies
+kafka-python   # Kafka client for Python
+matplotlib     # Plotting results
+numpy          # Numerical computations
+pandas         # Data manipulation
+pytest         # For running unit tests
+tqdm           # Progress bars

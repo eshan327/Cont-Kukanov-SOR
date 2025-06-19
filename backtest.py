@@ -1,5 +1,3 @@
-# backtest.py
-# Orchestrates parameter tuning, benchmarking, and result evaluation for SOR 
 from kafka import KafkaConsumer
 import json as _json
 from collections import defaultdict
@@ -10,6 +8,8 @@ from kafka.errors import NoBrokersAvailable
 from utils import best_ask, twap, vwap
 import itertools
 import matplotlib.pyplot as plt
+import random
+import time
 
 def group_snapshots_by_timestamp(messages):
     batches = defaultdict(list)
@@ -22,12 +22,21 @@ def accumulate_fills_and_cash(batches, order_size, lambda_over, lambda_under, th
     total_cash = 0.0
     total_filled = 0
     for ts, venues in batches.items():
-        split, cost = allocate(order_size, venues, lambda_over, lambda_under, theta_queue)
+        time.sleep(config.LATENCY_MS / 1000)
+        perturbed_venues = []
+        for v in venues:
+            v = v.copy()
+            # 10% chance price moves up by 1-2 ticks, size drops by 10-30%
+            if random.random() < 0.1:
+                v['ask_px_00'] += random.choice([0.01, 0.02])
+                v['ask_sz_00'] = int(v['ask_sz_00'] * random.uniform(0.7, 0.9))
+            perturbed_venues.append(v)
+        split, cost = allocate(order_size, perturbed_venues, lambda_over, lambda_under, theta_queue)
         filled = sum(split)
         total_cash += cost
         total_filled += filled
         print(f"Timestamp: {ts}")
-        print(f"Venues: {venues}")
+        print(f"Venues: {perturbed_venues}")
         print(f"Split: {split}, Cost: {cost}, Filled: {filled}")
         print(f"Running totals - Cash: {total_cash}, Shares filled: {total_filled}\n")
     return total_cash, total_filled
@@ -69,16 +78,22 @@ def compute_savings_bps(optimized_cost, baselines):
         print(f"Savings vs {name}: {bps:.2f} bps")
     return savings
 
-def serialize_results(best_params, best_cost, baselines, savings):
+def serialize_results(best_params, best_cost, baselines, savings, best_avg_px):
     result = {
         'best_parameters': best_params,
-        'optimized': {'cost': best_cost},
-        'baselines': {k: {'cost': v[0], 'avg_price': v[1]} for k, v in baselines.items()},
+        'optimized': {
+            'total_cash': best_cost,
+            'avg_fill_px': best_avg_px
+        },
+        'baselines': {k: {'total_cash': v[0], 'avg_fill_px': v[1]} for k, v in baselines.items()},
         'savings_vs_baselines_bps': savings
     }
     with open('output.json', 'w') as f:
         _json.dump(result, f, indent=2)
+    print("\nFinal JSON output:")
+    print(_json.dumps(result, indent=2))
     print("\nResults written to output.json")
+    return result
 
 def plot_results(best_cost, baselines):
     strategies = ['optimized'] + list(baselines.keys())
@@ -93,13 +108,12 @@ def plot_results(best_cost, baselines):
     plt.savefig('results.png')
     print('results.png saved.')
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true', help='Run with mock data instead of Kafka')
     args = parser.parse_args()
 
     if args.dry_run:
-        # Mock messages for dry run
         mock_messages = []
         for ts in ["2024-08-01T13:36:32.491911683Z", "2024-08-01T13:36:32.491911684Z"]:
             for venue in [
@@ -128,16 +142,26 @@ if __name__ == "__main__":
             print("[ERROR] No Kafka brokers available at localhost:9092. Run with --dry-run to skip consuming.")
             exit(1)
     batches = group_snapshots_by_timestamp(messages)
-    # Baselines
     print("\n--- Baseline Strategies ---")
     baselines = run_baselines(batches, config.ORDER_SIZE)
-    # Parameter grid search
     print("\n--- Parameter Grid Search ---")
     best_params, best_cost = run_param_grid(batches, config.ORDER_SIZE, config.PARAM_GRID)
-    # Compute savings in bps
     print("\n--- Savings vs Baselines (bps) ---")
     savings = compute_savings_bps(best_cost, baselines)
-    # Serialize final JSON
-    serialize_results(best_params, best_cost, baselines, savings)
-    # Plot results
-    plot_results(best_cost, baselines) 
+    best_avg_px = 0.0
+    for ts, venues in batches.items():
+        split, _ = allocate(config.ORDER_SIZE, venues, best_params['lambda_over'], best_params['lambda_under'], best_params['theta_queue'])
+        filled = sum(split)
+        if filled > 0:
+            # Weighted average price for this batch
+            batch_cost = sum([split[i] * (venues[i]['ask_px_00'] + venues[i].get('fee', 0.0)) for i in range(len(split))])
+            best_avg_px += batch_cost
+    if len(batches) > 0 and config.ORDER_SIZE > 0:
+        best_avg_px = best_avg_px / (config.ORDER_SIZE * len(batches))
+    else:
+        best_avg_px = 0.0
+    serialize_results(best_params, best_cost, baselines, savings, best_avg_px)
+    plot_results(best_cost, baselines)
+
+if __name__ == "__main__":
+    main() 

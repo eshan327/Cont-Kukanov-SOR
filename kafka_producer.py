@@ -1,6 +1,3 @@
-# kafka_producer.py
-# Streams market snapshots from l1_day.csv into Kafka topic mock_l1_stream 
-
 import pandas as pd
 import json
 import time
@@ -23,7 +20,7 @@ def format_row(row):
         'rebate': 0.0  # Placeholder, update if rebate column exists
     }
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true', help='Run without Kafka publishing')
     args = parser.parse_args()
@@ -62,4 +59,7 @@ if __name__ == "__main__":
             if i < 3:
                 print(f"Published: {d}")
         producer.flush()
-        print("\nFinished publishing to Kafka.") 
+        print("\nFinished publishing to Kafka.")
+
+if __name__ == "__main__":
+    main() 

@@ -5,20 +5,21 @@
     "theta_queue": 0.0
   },
   "optimized": {
-    "cost": 160096.0
+    "total_cash": 160096.0,
+    "avg_fill_px": 16.0096
   },
   "baselines": {
     "best_ask": {
-      "cost": 80048.0,
-      "avg_price": 100.06
+      "total_cash": 80048.0,
+      "avg_fill_px": 100.06
     },
     "twap": {
-      "cost": 160096.0,
-      "avg_price": 32.0192
+      "total_cash": 160096.0,
+      "avg_fill_px": 32.0192
     },
     "vwap": {
-      "cost": 160096.0,
-      "avg_price": 32.0192
+      "total_cash": 160096.0,
+      "avg_fill_px": 32.0192
     }
   },
   "savings_vs_baselines_bps": {
